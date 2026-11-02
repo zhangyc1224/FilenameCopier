@@ -2,13 +2,11 @@
 
 > 勾选文件 → 一键复制文件名。小而专的 Windows 桌面小工具，单文件 exe、免安装、无联网。
 
-[![Build EXE](https://github.com/<your-github-username>/FilenameCopier/actions/workflows/build.yml/badge.svg)](https://github.com/<your-github-username>/FilenameCopier/actions/workflows/build.yml)
+[![Build EXE](https://github.com/zhangyc1224/FilenameCopier/actions/workflows/build.yml/badge.svg)](https://github.com/zhangyc1224/FilenameCopier/actions/workflows/build.yml)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
-<!-- 截图占位：截一张主界面图放到 docs/screenshot.png，然后取消下面这行注释
 ![screenshot](docs/screenshot.png)
--->
 
 ## ✨ 功能
 
