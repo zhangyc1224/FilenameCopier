@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>批量复制文件名工具</title>
+<style>
+  :root {
+    --bg: #1e1f24;
+    --panel: #26272e;
+    --panel2: #2d2e36;
+    --border: #3a3b44;
+    --text: #e4e5ea;
+    --text-dim: #9a9ba6;
+    --accent: #4f8cff;
+    --accent-hover: #3a78f0;
+    --green: #34c77b;
+    --red: #e05555;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+
+  .toolbar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  button {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover { background: #383945; }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+
+  input[type="text"] {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+    flex: 1;
+    min-width: 160px;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  .format-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .format-row label { display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-dim); }
+  .format-row label:has(input:checked) { color: var(--text); }
+
+  .file-list {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: Consolas, "Courier New", monospace;
+  }
+  .file-item:last-child { border-bottom: none; }
+  .file-item:hover { background: var(--panel2); }
+  .file-item.checked { background: rgba(79, 140, 255, .12); }
+  .file-item input { cursor: pointer; accent-color: var(--accent); }
+  .file-item .name { flex: 1; word-break: break-all; }
+  .file-item .size { color: var(--text-dim); font-size: 12px; }
+
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--green);
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform .3s ease;
+    z-index: 99;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .folder-label { color: var(--text-dim); font-size: 12px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .preview {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 140px;
+    overflow-y: auto;
+  }
+  .empty { padding: 30px; text-align: center; color: var(--text-dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📋 批量复制文件名工具</h1>
+  <div class="subtitle">勾选文件 → 一键复制文件名，支持多种分隔格式</div>
+
+  <div class="toolbar">
+    <label class="btn-wrap" style="position:relative;overflow:hidden;">
+      <span style="display:inline-block;padding:8px 14px;font-size:13px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);cursor:pointer;">📂 选择文件夹</span>
+      <input type="file" id="folderPicker" webkitdirectory multiple style="position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+    </label>
+    <button id="selectAll">全选</button>
+    <button id="invert">反选</button>
+    <button id="clear">清空</button>
+    <input type="text" id="filter" placeholder="🔍 搜索过滤文件名…">
+    <span class="folder-label" id="folderLabel"></span>
+  </div>
+
+  <div class="statusbar">
+    <span id="stat">共 0 个文件，已选 0 个</span>
+    <button class="primary" id="copyBtn">⧉ 复制所选文件名</button>
+  </div>
+
+  <div class="format-row">
+    <span>复制格式：</span>
+    <label><input type="radio" name="fmt" value="name" checked>完整文件名</label>
+    <label><input type="radio" name="fmt" value="stem">不含扩展名</label>
+    <label><input type="radio" name="fmt" value="path">完整路径</label>
+    <span>分隔符：</span>
+    <label><input type="radio" name="sep" value="nl" checked>换行</label>
+    <label><input type="radio" name="sep" value="space">空格</label>
+    <label><input type="radio" name="sep" value="comma">逗号</label>
+    <label><input type="radio" name="sep" value="semicolon">分号</label>
+  </div>
+
+  <div class="file-list" id="fileList"><div class="empty">暂无文件，请点击「选择文件夹」加载</div></div>
+  <div class="preview" id="preview">复制预览：—</div>
+</div>
+
+<div class="toast" id="toast">✓ 已复制到剪贴板</div>
+
+<script>
+// 预载的验证文件夹（D:\WorkSpace\...\上线版本\json）的文件清单
+const DEFAULT_FOLDER = "D:\\WorkSpace\\sitech\\2026\\需求\\10月\\关于产商品中心10月版本需求的改造通知\\上线版本\\json";
+const DEFAULT_FILES = ["F0001889_0.json","F0001891_0.json","F0001892_0.json","F0001893_0.json","F0001894_0.json","F0001900_0.json","F0001921_0.json","F0001923_0.json","F0001924_0.json","F0001925_0.json","F0001926_0.json","F0001927_0.json","F0002620_0.json","F0002620_1.json","F0002621_0.json","F0002621_1.json","basePkgIdApply-PCC-1.0.0_0.json","basePkgUpdate-PCC-1.0.0_0.json","campaignIdApply-PCC-1.0.0_0.json","campaignUpdate-PCC-1.0.0_0.json","combinedPkgIdApply-PCC-1.0.0_0.json","combinedPkgUpdate-PCC-1.0.0_0.json","groupPkgIdApply-PCC-1.0.0_0.json","groupPkgUpdate-PCC-1.0.0_0.json","modulePkgIdApply-PCC-1.0.0_0.json","modulePkgUpdate-PCC-1.0.0_0.json","optionalPkgIdApply-PCC-1.0.0_0.json","optionalPkgUpdate-PCC-1.0.0_0.json","productIdApply-PCC-1.0.0_0.json","productUpdate-PCC-1.0.0_0.json"].map(n => ({ name: n, size: null }));
+
+let files = [];       // { name, size, webkitRelativePath? }
+let checked = new Set();
+let currentFolder = DEFAULT_FOLDER;
+
+const $ = id => document.getElementById(id);
+const fileListEl = $("fileList");
+const statEl = $("stat");
+const previewEl = $("preview");
+const toastEl = $("toast");
+
+function initDefault() {
+  files = DEFAULT_FILES.map(f => ({ ...f }));
+  checked = new Set();
+  currentFolder = DEFAULT_FOLDER;
+  $("folderLabel").textContent = DEFAULT_FOLDER;
+  render();
+}
+
+$("folderPicker").addEventListener("change", e => {
+  const fs = Array.from(e.target.files);
+  if (!fs.length) return;
+  const first = fs[0].webkitRelativePath || "";
+  currentFolder = first.includes("/") ? first.split("/").slice(0, -1).join("/") : "(所选文件夹)";
+  files = fs.map(f => ({ name: f.name, size: f.size }));
+  checked = new Set();
+  $("folderLabel").textContent = currentFolder;
+  $("filter").value = "";
+  render();
+});
+
+$("selectAll").onclick = () => { visible().forEach(f => checked.add(f.name)); render(); };
+$("clear").onclick = () => { checked.clear(); render(); };
+$("invert").onclick = () => {
+  visible().forEach(f => {
+    checked.has(f.name) ? checked.delete(f.name) : checked.add(f.name);
+  });
+  render();
+};
+$("filter").addEventListener("input", render);
+
+function visible() {
+  const kw = $("filter").value.trim().toLowerCase();
+  return kw ? files.filter(f => f.name.toLowerCase().includes(kw)) : files;
+}
+
+function render() {
+  const vis = visible();
+  if (!vis.length) {
+    fileListEl.innerHTML = '<div class="empty">没有匹配的文件</div>';
+  } else {
+    fileListEl.innerHTML = vis.map(f => {
+      const isOn = checked.has(f.name);
+      return `<div class="file-item ${isOn ? "checked" : ""}" data-name="${f.name.replace(/"/g, "&quot;")}">
+        <input type="checkbox" ${isOn ? "checked" : ""}>
+        <span class="name">${f.name}</span>
+        ${f.size != null ? `<span class="size">${formatSize(f.size)}</span>` : ""}
+      </div>`;
+    }).join("");
+  }
+  const selCount = checked.size;
+  statEl.textContent = `共 ${files.length} 个文件${vis.length !== files.length ? `，筛选出 ${vis.length} 个` : ""}，已选 ${selCount} 个`;
+  $("copyBtn").disabled = selCount === 0;
+  $("copyBtn").style.opacity = selCount === 0 ? ".5" : "1";
+  updatePreview();
+}
+
+fileListEl.addEventListener("click", e => {
+  const item = e.target.closest(".file-item");
+  if (!item) return;
+  const name = item.dataset.name;
+  checked.has(name) ? checked.delete(name) : checked.add(name);
+  render();
+});
+
+function formatSize(b) {
+  if (b < 1024) return b + " B";
+  if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+  return (b / 1048576).toFixed(1) + " MB";
+}
+
+function buildOutput() {
+  const fmt = document.querySelector('input[name="fmt"]:checked').value;
+  const sep = document.querySelector('input[name="sep"]:checked').value;
+  const sepMap = { nl: "\n", space: " ", comma: ", ", semicolon: ";" };
+  const ordered = files.filter(f => checked.has(f.name));
+  return ordered.map(f => {
+    if (fmt === "stem") return f.name.replace(/\.[^.]+$/, "");
+    if (fmt === "path") return currentFolder + "\\" + f.name;
+    return f.name;
+  }).join(sepMap[sep]);
+}
+
+function updatePreview() {
+  const out = buildOutput();
+  previewEl.textContent = "复制预览：\n" + (out || "—");
+}
+
+document.querySelectorAll('input[name="fmt"], input[name="sep"]').forEach(r =>
+  r.addEventListener("change", updatePreview)
+);
+
+$("copyBtn").onclick = async () => {
+  const out = buildOutput();
+  if (!out) return;
+  try {
+    await navigator.clipboard.writeText(out);
+  } catch (err) {
+    // http 环境降级方案
+    const ta = document.createElement("textarea");
+    ta.value = out;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+  toastEl.classList.add("show");
+  setTimeout(() => toastEl.classList.remove("show"), 1800);
+};
+
+initDefault();
+</script>
+</body>
+</html>
