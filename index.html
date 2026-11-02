@@ -192,13 +192,10 @@
 <div class="toast" id="toast">✓ 已复制到剪贴板</div>
 
 <script>
-// 预载的验证文件夹（D:\WorkSpace\...\上线版本\json）的文件清单
-const DEFAULT_FOLDER = "D:\\WorkSpace\\sitech\\2026\\需求\\10月\\关于产商品中心10月版本需求的改造通知\\上线版本\\json";
-const DEFAULT_FILES = ["F0001889_0.json","F0001891_0.json","F0001892_0.json","F0001893_0.json","F0001894_0.json","F0001900_0.json","F0001921_0.json","F0001923_0.json","F0001924_0.json","F0001925_0.json","F0001926_0.json","F0001927_0.json","F0002620_0.json","F0002620_1.json","F0002621_0.json","F0002621_1.json","basePkgIdApply-PCC-1.0.0_0.json","basePkgUpdate-PCC-1.0.0_0.json","campaignIdApply-PCC-1.0.0_0.json","campaignUpdate-PCC-1.0.0_0.json","combinedPkgIdApply-PCC-1.0.0_0.json","combinedPkgUpdate-PCC-1.0.0_0.json","groupPkgIdApply-PCC-1.0.0_0.json","groupPkgUpdate-PCC-1.0.0_0.json","modulePkgIdApply-PCC-1.0.0_0.json","modulePkgUpdate-PCC-1.0.0_0.json","optionalPkgIdApply-PCC-1.0.0_0.json","optionalPkgUpdate-PCC-1.0.0_0.json","productIdApply-PCC-1.0.0_0.json","productUpdate-PCC-1.0.0_0.json"].map(n => ({ name: n, size: null }));
-
+// 浏览器出于安全限制无法直接读取任意本地路径，请点击「选择文件夹」加载
 let files = [];       // { name, size, webkitRelativePath? }
 let checked = new Set();
-let currentFolder = DEFAULT_FOLDER;
+let currentFolder = "";
 
 const $ = id => document.getElementById(id);
 const fileListEl = $("fileList");
@@ -206,13 +203,7 @@ const statEl = $("stat");
 const previewEl = $("preview");
 const toastEl = $("toast");
 
-function initDefault() {
-  files = DEFAULT_FILES.map(f => ({ ...f }));
-  checked = new Set();
-  currentFolder = DEFAULT_FOLDER;
-  $("folderLabel").textContent = DEFAULT_FOLDER;
-  render();
-}
+function render() {
 
 $("folderPicker").addEventListener("change", e => {
   const fs = Array.from(e.target.files);
@@ -297,25 +288,23 @@ document.querySelectorAll('input[name="fmt"], input[name="sep"]').forEach(r =>
   r.addEventListener("change", updatePreview)
 );
 
-$("copyBtn").onclick = async () => {
-  const out = buildOutput();
-  if (!out) return;
-  try {
-    await navigator.clipboard.writeText(out);
-  } catch (err) {
-    // http 环境降级方案
-    const ta = document.createElement("textarea");
-    ta.value = out;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-  }
-  toastEl.classList.add("show");
-  setTimeout(() => toastEl.classList.remove("show"), 1800);
+  $("copyBtn").onclick = async () => {
+    const out = buildOutput();
+    if (!out) return;
+    try {
+      await navigator.clipboard.writeText(out);
+    } catch (err) {
+      // http 环境降级方案
+      const ta = document.createElement("textarea");
+      ta.value = out;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    toastEl.classList.add("show");
+    setTimeout(() => toastEl.classList.remove("show"), 1800);
 };
-
-initDefault();
 </script>
 </body>
 </html>

@@ -11,3 +11,6 @@ dist/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Built binaries (CI builds these)
+*.exe
